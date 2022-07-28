@@ -1,0 +1,230 @@
+package ${package.Controller};
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.dfdk.common.constants.RequestData;
+import com.dfdk.common.utils.Result;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.lang.reflect.Field;
+import java.time.LocalDateTime;
+
+import ${package.Service}.${table.serviceName};
+import ${package.Entity}.${entity};
+/**
+ *
+ * @author ${author}
+ * @since ${date}
+ */
+@Slf4j
+#if(${restControllerStyle})
+@Api(tags = {"${table.comment}接口"})
+@RestController
+#else
+@Controller
+#end
+@RequestMapping("/huiZhouApi")
+#if(${superControllerClass})
+@Transactional(rollbackFor = Exception.class,propagation= Propagation.REQUIRED)
+public class ${table.controllerName} extends ${superControllerClass} {
+#else
+public class ${table.controllerName} {
+#end
+
+@Autowired
+public ${table.serviceName} i${entity}Service;
+
+
+/**
+ * 分页查询数据
+ */
+@ApiOperation(value = "${table.comment} - 查询列表")
+@ResponseBody
+@PostMapping("/query${entity}Page")
+public Result<Object> get${entity}List(@RequestBody RequestData<${entity}> requestData){
+        Result<Object> result = new Result<>();
+        result.success();
+        try {
+        //获取翻页数据
+                long currentPage = 1;
+                long pageSize = 10;
+        try {
+                currentPage = requestData.getCurrentPage();
+                pageSize = requestData.getPageSize();
+        if (currentPage == 0 || pageSize == 0) {
+                currentPage = 1;
+                pageSize = 10;
+        }
+                } catch (Exception e) {
+                log.error("翻页信息为空：", e);
+        }
+        //获取查询对象
+        QueryWrapper queryWrapper = getQueryWrapper(requestData.getData());
+        //创建翻页
+        Page page = new Page<>(currentPage, pageSize);
+
+        Page pageList = i${entity}Service.page(page, queryWrapper);
+
+        result.ok(pageList.getRecords());//设置翻页列表
+        result.setCount(pageList.getTotal()); //设置总条数
+
+        } catch (Exception e) {
+                result.error();
+                log.error("分页查询异常: ", e);
+         }
+        return result;
+}
+
+/**
+  * 新增
+  */
+@ApiOperation(value = "${table.comment}-新增数据")
+@PostMapping("/add${entity}")
+public Result<Object> add${entity}(@RequestBody RequestData<${entity}> requestData) {
+        Result<Object> result = new Result<>();
+        result.success();
+        try {
+                //获取查询对象
+                ${entity} data${entity} = requestData.getData();
+                if (null != data${entity}) {
+                        i${entity}Service.save(data${entity});
+                }
+        } catch (Exception e) {
+                result.error();
+                log.error("新增数据异常: ", e);
+        }
+        return result;
+        }
+
+
+/**
+  * 修改
+  */
+@ApiOperation(value = "${table.comment}-修改数据")
+@PostMapping("/update${entity}")
+public Result<Object> update${entity}(@RequestBody RequestData<${entity}> requestData) {
+        Result<Object> result = new Result<>();
+        result.success();
+        try {
+                //获取查询对象
+                ${entity} data${entity} = requestData.getData();
+                if (null != data${entity}) {
+                        boolean update = i${entity}Service.update(data${entity}, getUpdateOrSaveWrapper(data${entity}));
+                if (!update) {
+                result.error();
+                }
+                }
+        } catch (Exception e) {
+                result.error();
+                log.error("修改数据异常: ", e);
+        }
+                return result;
+        }
+
+/**
+ * 删除
+ */
+@ApiOperation(value = "${table.comment}-根据ID删除数据")
+@PostMapping("/delete${entity}ById")
+public Result<Object> delete${entity}ById(@RequestBody RequestData<${entity}> requestData) {
+        Result<Object> result = new Result<>();
+        result.success();
+        try {
+                boolean removeById = i${entity}Service.remove(getQueryWrapper(requestData.getData()));
+                if (!removeById) {
+                        result.error();
+                }
+        } catch (Exception e) {
+                result.error();
+                log.error("根据ID删除数据异常: ", e);
+        }
+                return result;
+        }
+
+/**
+ * 获取查询条件
+ */
+public QueryWrapper getQueryWrapper(Object data) {
+        QueryWrapper<${entity}> queryWrapper = new QueryWrapper<>();
+        try {
+        Field[] declaredFields = ${entity}.class.getDeclaredFields();
+        for (Field field : declaredFields) {
+                field.setAccessible(true);
+                Object destValue = field.get(data);
+                String fieldName = field.getName();
+                String sqlName = "";
+                //获取ID字段
+                TableId annotation = field.getAnnotation(TableId.class);
+                if (null != annotation) {
+                        sqlName = annotation.value(); //数据库字段
+                //组装查询条件
+                if (null != destValue && !destValue.equals("")) {
+                        queryWrapper.eq(sqlName, destValue);
+                        return queryWrapper;
+                 }
+        } else {
+                //获取普通字段
+                TableField fieldAnnotation = field.getAnnotation(TableField.class);
+                if (null != fieldAnnotation) {
+                        sqlName = fieldAnnotation.value(); //数据库字段
+                //组装查询条件
+                if (null != destValue && !destValue.equals("")) {
+                        queryWrapper.likeRight(sqlName, destValue);
+                        }
+                        }
+                 }
+        }
+        } catch (Exception e) {
+                e.printStackTrace();
+        }
+                return queryWrapper;
+        }
+
+/**
+ * 获取更新条件
+ */
+public QueryWrapper getUpdateOrSaveWrapper(Object data) {
+        QueryWrapper<${entity}> queryWrapper = new QueryWrapper<>();
+        try {
+        Field[] declaredFields = ${entity}.class.getDeclaredFields();
+        for (Field field : declaredFields) {
+                field.setAccessible(true);
+                Object destValue = field.get(data);
+                String fieldName = field.getName();
+                String sqlName = "";
+                //更新修改时间
+                String tempTime = fieldName.toLowerCase();
+                if (null == destValue || destValue.equals("") && tempTime.contains("time")) {//年月日 时分秒
+                if (tempTime.contains("update") || tempTime.contains("end")) {
+                        field.set(data, LocalDateTime.now());
+                        continue;
+                        }
+                }
+                if (null == destValue || destValue.equals("") && tempTime.contains("date")) { //年月日
+                if (tempTime.contains("update") || tempTime.contains("end")) {
+                        field.set(data, LocalDateTime.now());
+                        continue;
+                }
+                }
+                //获取ID字段
+                TableId annotation = field.getAnnotation(TableId.class);
+                if (null != annotation) {
+                        sqlName = annotation.value(); //数据库字段
+                //组装查询条件
+                if (null != destValue && !destValue.equals("")) {
+                        queryWrapper.eq(sqlName, destValue);
+                        }
+                 }
+                }
+        } catch (Exception e) {
+                e.printStackTrace();
+        }
+                return queryWrapper;
+        }
+        }

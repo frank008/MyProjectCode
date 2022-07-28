@@ -1,0 +1,160 @@
+Linux 下杀毒软件 clamav 0.104.2 离线安装及测试（CentOS7）
+1.下载安装
+2. 配置
+3. 运行
+4.服务器配置
+4.1 设置 daemon 守护进程（推荐）
+4.2 定时任务
+5.ClamAV 常用命令
+
+clamav 官网下载 clamav-0.104.2.linux.x86_64.rpm
+# 有网络可用如下命令下载
+wget https://www.clamav.net/downloads/production/clamav-0.104.2.linux.x86_64.rpm
+------------------------------------------------------------
+将该文件上传至服务器
+安装命令如下：
+rpm -ivh --prefix=/usr/local/clamav  clamav-0.104.2.linux.x86_64.rpm
+
+添加用户组和组成员
+groupadd clamav
+useradd -g clamav clamav
+
+创建日志目录、病毒库目录和套接字目录
+mkdir -p /usr/local/clamav/logs
+mkdir -p /usr/local/clamav/update
+mkdir -p /usr/local/clamav/socket
+
+创建日志文件
+touch /usr/local/clamav/logs/clamd.log
+touch /usr/local/clamav/logs/freshclam.log
+
+文件授权
+ chown clamav:clamav /usr/local/clamav/logs/clamd.log
+ chown clamav:clamav /usr/local/clamav/logs/freshclam.log
+ chown clamav:clamav /usr/local/clamav/logs
+ chown clamav:clamav /usr/local/clamav/update
+ chown clamav:clamav /usr/local/clamav/socket
+
+修改配置文件
+cp  /usr/local/clamav/etc/clamd.conf.sample /usr/local/clamav/etc/clamd.conf
+cp /usr/local/clamav/etc/freshclam.conf.sample /usr/local/clamav/etc/freshclam.conf
+
+-------------------------------------------------------------
+文件1：clamd.conf
+vim /usr/local/clamav/etc/clamd.conf
+
+#Example　　//注释掉这一行
+#添加以下内容
+LogFile /usr/local/clamav/logs/clamd.log
+PidFile /usr/local/clamav/update/clamd.pid
+DatabaseDirectory /usr/local/clamav/update
+LocalSocket /usr/local/clamav/socket/clamd.socket
+
+-------------------------------------------------------------
+文件2：freshclam.conf
+vim /usr/local/clamav/etc/freshclam.conf
+
+#Example　　//注释掉这一行
+#添加以下内容
+DatabaseDirectory /usr/local/clamav/update
+UpdateLogFile /usr/local/clamav/logs/freshclam.log
+PidFile /usr/local/clamav/update/freshclam.pid
+
+-------------------------------------------------------------
+将这两个文件复制一下：
+cp /usr/local/clamav/etc/*.conf /usr/local/etc/
+-----------------------------
+配置库文件路径
+vim /etc/ld.so.conf
+ld.so加载器：相应的配置文件是/etc/ld.so.conf，指定so库的搜索路径，是文本文件
+cat  /etc/ld.so.conf
+ 
+echo  /usr/local/clamav/lib64 > /etc/ld.so.conf.d/clamavlib64.conf
+cat  /etc/ld.so.conf.d/clamavlib64.conf
+
+更新生效：
+ldconfig
+---------------------------------------------------
+在有网络的机器上运行如下命令更新病毒库：
+/usr/local/clamav/bin/freshclam
+=======================
+创建命令软件链接
+ln -s /usr/local/clamav/bin/clamscan /usr/local/bin/clamscan
+ln -s /usr/local/clamav/bin/freshclam /usr/local/bin/freshclam
+
+===========================
+运行使用
+# clamscan -r 指定目录（不填则默认当前目录）
+clamscan -r
+# 后台运行
+nohup clamscan -r / > clamscanNohup.log 2>&1 &
+============
+卸载程序
+rpm remove clamav
+======================
+服务器配置
+设置 daemon 守护进程（推荐）
+开机自动更新病毒库# 启动clamav守护进程
+freshclam --daemon
+# 设置freshclam开机自启动
+echo "/usr/local/clamav/bin/freshclam --daemon" >> /etc/rc.d/rc.local
+=====================================
+守护模式启动程序
+/usr/local/clamav/sbin/clamd
+================
+检查是否开启守护进程
+# 运行如下命令，其中 TPGID 显示为 -1
+ps ajx | more
+ps ajx | grep freshclam
+ps ajx | grep clamd
+==========================
+定时任务
+# 打开定时任务配置文件
+crontab -e
+# 升级病毒库
+0 23  * * *	 /usr/local/clamav/bin/freshclam
+# 定时查杀指定目录并删除感染的文件
+0 */12 * * * clamscan -r / --remove -l  /usr/local/clamav/logs/clamscan.log
+
+---------------
+* * * * *
+*/2 * * * *  间隔两分钟执行一次
+分  时  日 月  星期几
+----------------------
+查看 定时任务个数
+crontab -l
+ -------------------------------------------
+前五个字段可以使用下面的特殊字符来指定一些特殊的时间：
+表示任意一个有效的取值。例如，把日期指定为 *，则表示每一天都进行该任务。
+- 
+表示一个有效的范围值。例如，在小时指定为 8-11，表示在 8点、9点、10点、和 11点都执行该任务。
+,
+表示隔开不同的取值列表。例如，把小时指定为 2,3,5,7，表示在 2点、3点、5点、7点都执行该任务。
+注意：在逗号后面不要加空格，空格表示隔开不同的字段。
+/
+表示一个时间间隔，而不是指定具体的时间。例如，把小时指定为 */2，表示每间隔两小时执行一次该任务。
+============================================
+ClamAV 常用命令
+# 更多参数详见
+clamscan -h
+freshclam -h
+=================
+clamscan：
+通用，不依赖服务，命令参数较多，执行速度稍慢；
+用clamscan扫描，不需要开始服务就能使用；
+-r 递归扫描子目录
+-i 只显示发现的病毒文件
+--no-summary 不显示统计信息 
+
+扫描参数：
+-r/--recursive[=yes/no]               所有文件
+--log=FILE/-l FILE                    增加扫描报告
+--move [路径]        		      移动病毒文件至..
+--remove [路径]      	              删除病毒文件
+--quiet               		      只输出错误消息
+--infected/-i         		      只输出感染文件
+--suppress-ok-results/-o              跳过扫描OK的文件
+--bell                      	      扫描到病毒文件发出警报声音
+--unzip(unrar)                        解压压缩文件扫描
+===================================
+
