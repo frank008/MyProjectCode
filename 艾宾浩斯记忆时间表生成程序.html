@@ -1,0 +1,219 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- saved from url=(0031)https://www.cspro.top/data.html -->
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>皓思百微-艾宾浩斯记忆曲线</title>
+		<meta name="Generator" content="EditPlus">
+		<meta name="Author" content="">
+		<meta name="Keywords" content="">
+		<meta name="Description" content="">
+	</head>
+
+	<body leftmargin="50" rightmargin="50">
+		<br>
+		<center>
+			<p>
+				<font size="6" color="#FF0000">艾宾浩斯记忆时间表生成程序</font>
+				<font color="#FF0000"></font>
+			</p>
+			<p><span id="mytime"></span></p>
+			<form method="get" action="https://www.cspro.top/data.html" name="mem">
+				<table style="border: solid 1px darkblue;padding: 1%;">
+					<tr>
+						<td >学习名称：</td>
+						<td><input style="width: 100%;" type="text" name="studyName" value="英语口语" placeholder="英语单词"></td>
+					</tr>
+					<tr>
+						<td>总单元数：</td>
+						<td><input type="text" name="total" value="73" placeholder="100"></td>
+					</tr>
+					<tr>
+						<td>每天学习单元数：</td>
+						<td><input type="text" name="day" value="2" placeholder="10"></td>
+					</tr>
+					<tr>
+						<td colspan="2" style="padding-top: 10%;">
+							<input type="button" onclick="sub(this.form)" value="点击生成时间计划表"
+						style="background-color:#42da42;border:none;width: 100%;height: 50px;"/>
+						</td>
+					</tr>
+				</table>
+			</form>
+		</center>
+		<p></p>
+		<p></p>
+		<div id="showData">
+
+		</div>
+		 
+			
+
+		<div align="center">
+			<script language="JavaScript">
+				 
+				function getDate() {
+					var date = new Date();
+					var year = date.getFullYear(); //  返回的是年份
+					var month = date.getMonth() + 1; //  返回的月份上个月的月份，记得+1才是当月
+					var dates = date.getDate(); //  返回的是几号
+					var day = date.getDay(); //  周一返回的是1，周六是6，但是周日是0
+					var arr = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六", ];
+					return year + "年" + month + "月" + dates + "号";
+				}
+				
+				function getAddDate(number) {
+					var date = new Date();
+					var year = date.getFullYear(); //  返回的是年份
+					var month = date.getMonth() + 1; //  返回的月份上个月的月份，记得+1才是当月
+					var dates = date.getDate(); //  返回的是几号
+					var day = date.getDay(); //  周一返回的是1，周六是6，但是周日是0
+					var arr = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六", ];
+					let nowDate= year + "-" + month + "-" + dates;
+					
+					date = new Date(""+nowDate+"");
+					
+					let addDate=new Date(date.setDate(date.getDate()+number));
+					year = addDate.getFullYear(); //  返回的是年份
+					month = addDate.getMonth() + 1; //  返回的月份上个月的月份，记得+1才是当月
+					dates = addDate.getDate(); //  返回的是几号
+					nowDate= year + "-" + month + "-" + dates;
+					return nowDate;
+				}
+				document.getElementById("mytime").innerHTML = getDate();
+
+				function sub(frm) {
+					var a = 0,
+						b = 0,
+						c = 0,
+						d = 0,
+						f = 0;
+					a = frm.total.value; //总的单元数
+					b = frm.day.value; //每天任务数
+					let studyName = frm.studyName.value; //每天任务数
+					if(null==studyName||studyName==""){
+						alert("学习名称 必填!");
+						return;
+					}
+					
+					if(null==a||a==""){
+						alert("总单元数 必填!");
+						return;
+					}
+					
+					if(null==b||b==""){
+						alert("每天学习单元数 必填!");
+						return;
+					}
+					
+					
+					if (a % b == 0) {
+						d = a / b; //全部学完的天数
+					} else {
+						d = (a / b) - ((a / b) % 1) + 1;
+					}
+					c = d + 29;
+
+
+					/////////////////////////////////////////////////////////////////////////////////////////////////
+					if (c % 7 != 0) {
+						f = 7 - (c % 7);
+					}
+
+					var arr = new Array(c + 1 + f);
+					for (var i = 1; i <= (c + f); i++) {
+						Array[i] = "";
+					}
+					for (var i = 1; i <= (c + f); i++) {
+						if (i <= d) {
+							Array[i] += "<TD>"+getAddDate(i)+"<BR><FONT  COLOR=#FF3300>第" + i + "天</FONT><BR>" + "List:" + ((i - 1) * b + 1) + "~" + (i *
+								b) + "<BR>";
+						} else {
+							Array[i] += "<TD>"+getAddDate(i)+"<BR><FONT  COLOR=#FF3300>第" + i + "天</FONT><BR>";
+						}
+					}
+					for (var i = 1; i <= d; i++) {
+						Array[i] += "*List:" + ((i - 1) * b + 1) + "~" + (i * b) + "<BR>";
+						Array[i + 1] += "*List:" + ((i - 1) * b + 1) + "~" + (i * b) + "<BR>";
+						Array[i + 3] += "*List:" + ((i - 1) * b + 1) + "~" + (i * b) + "<BR>";
+						Array[i + 7] += "*List:" + ((i - 1) * b + 1) + "~" + (i * b) + "<BR>";
+						Array[i + 14] += "*List:" + ((i - 1) * b + 1) + "~" + (i * b) + "<BR>";
+						Array[i + 29] += "*List:" + ((i - 1) * b + 1) + "~" + (i * b) + "<BR>";
+
+					}
+
+					for (var i = 1; i <= c + f; i++) {
+						Array[i] += "</TD>";
+						//alert(Array[i]);
+
+					}
+
+					////////////////////////////////////////////////////////////////////////////////////////////////
+
+					let mainHtml = "<BR><CENTER><H2>总共的单元数为" + "<FONT SIZE=6  COLOR='#FF3300'> " + a + " </FONT>" + "单元  " +
+						"每天" + "<FONT SIZE=6 COLOR='#FF3300'> " + b + " </FONT>" + "单元；" + "你需要" + "<FONT SIZE=6 COLOR='#FF3300'> " +
+						c + " </FONT>" + "天时间</H2></CENTER>" +
+						"<BR><CENTER><B><FONT SIZE=5 COLOR='#FF3333'>记忆周期时间表</FONT></B>" +
+						"<FONT SIZE=3 COLOR=black>" + "（注：* 带星号的表示复习）" + "</FONT></CENTER><BR>" +
+						"<CENTER>" +
+						"<TABLE border=1 width=60%>" +
+						"<TR bgcolor=#99CCFF bordercolor=#00CCFF>"+
+						"<TH COLSPAN=7>" 
+						+studyName+"-学习时间表" 
+						+"</TH>";
+
+
+					//document.write("<BR><CENTER><H4>总共的单元数为"+"<FONT SIZE=4  COLOR='#FF3300'>"+a+"</FONT>"+"单元  ")
+					//document.write("每天"+"<FONT SIZE=4 COLOR='#FF3300'>"+b+"</FONT>"+"单元；"+"你需要"+"<FONT SIZE=4 COLOR='#FF3300'>"+c+"</FONT>"+"天时间</H4></CENTER>");
+
+					//document.write("<BR><CENTER><B><FONT SIZE=5 COLOR='#FF3333'>记忆周期时间表</FONT></B>");
+					//document.write("<FONT SIZE=1 COLOR=#FF6699>"+"（注：带星号的表示复习）"+"</FONT></CENTER><BR>");
+
+
+					//document.write("<CENTER>");
+					//document.write("<TABLE border=1 width=80%>");
+					//document.write("<TR bgcolor=#99CCFF bordercolor=#00CCFF>");
+					//document.write("<TH COLSPAN=7>");
+
+					//document.write("时间表");//写入的内容
+					//document.write("</TH>");
+
+					let tempHtml = "";
+
+					for (var i = 0; i < (c + f); i++) {
+						if (i % 7 == 0) {
+							//document.write("</TR>");
+							//document.write("<TR align=center bgcolor=#99CCFF bordercolor=#00CCFF>");
+
+							tempHtml = tempHtml + "</TR>" + "<TR  bgcolor=#99CCFF bordercolor=#00CCFF>"
+						}
+						tempHtml = tempHtml + Array[i + 1];
+						//document.write(Array[i+1]);//写入的内容
+
+					}
+
+					mainHtml = mainHtml + tempHtml + "</TR>" + "<CENTER>" + "</TABLE>";
+
+					//document.write("</TR>");
+					//document.write("<CENTER>");
+					//document.write("</TABLE>");
+
+					console.log(mainHtml);
+
+					document.getElementById("showData").innerHTML = mainHtml;
+					
+				}
+			</script>
+			
+		</div>
+			<div></div>
+			<div style="float: right;">
+				<p style="align-content: center;color: blue;">广东省广州市,皓思百微软件科技有限公司</p>
+			</div>
+		</div>
+		<p></p>
+		<p></p>
+		<p></p>
+		<p> </p>
+	</body>
+</html>
