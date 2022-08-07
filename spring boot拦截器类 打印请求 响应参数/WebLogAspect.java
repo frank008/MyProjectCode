@@ -65,7 +65,7 @@ public class WebLogAspect {
                 methodDescribe.set(value);
             }
         }
-
+        log.info("请求路径："+request.getRequestURI());
         log.info(value + "入参：{} ", parseArgs(joinPoint));
     }
 
