@@ -1,0 +1,345 @@
+Vue 组件创建事项 父子组件调用
+
+父子组件 每次调用 都会再去创建子组件
+父引用组件
+<QueryBindData 
+v-if="queryVisible"    //为 true时,才创建组件,fasle销毁组件
+:isVisible="queryVisible" 
+@closeQueryDialog="closeMyQueryDialog" 
+:queryType="lineType" 
+@selectData="selectQueryData">
+
+</QueryBindData>
+
+<script>
+import QueryBindData from "@/components/Utils/QueryBindData";
+  export default {
+ components:{
+      QueryBindData
+    },
+data(){
+return{
+	queryVisible: false,
+	}
+}
+
+methods: {
+      closeMyQueryDialog(data) {
+        this.queryVisible = data;
+      },
+      selectLineDataTwo() {
+        this.queryVisible = true;
+      },
+      selectQueryData(data) {
+        this.dataForm.lineId = data.lineId;
+        this.dataForm.lineName = data.name;
+      }
+}
+}
+</script>
+
+=================
+子组件回调方法
+ export default {
+    name: "UploadFiles",
+    props: {
+      isVisible:{   //属性定义  只能回调父组件方法 修改值
+        type:Boolean,
+        default: false
+      },
+      queryType:{  //属性定义  只能回调父组件方法 修改值
+        type: String,
+        default: "null"
+      }
+    },
+data(){
+return{
+	queryVisible: false,
+	}
+}，
+ methods: {
+      closeMyDialog(){
+        this.$emit('closeQueryDialog',false);  //子组件回调 父组件方法
+      },
+}
+=============================
+<template>
+  <div>
+    <el-dialog title="搜索xxxx" :visible="isVisible" custom-class="detail-dialog" :before-close="handleClose">
+      <div class="main-view" style="background-color: #101e4a;">
+        <!--  搜索   -->
+        <div class="search-box">
+          <el-form ref="form" :inline="true" label-width="0px" class="search-form">
+            <el-form-item>
+              <el-input v-model="keysName" placeholder="关键词"></el-input>
+            </el-form-item>
+            <el-form-item>
+              <select style="height: 38px;width: 84px;background: none;color:white;border: 2px solid #1376c9;"
+                      @change="selectQueryOptions">
+                <option name="" value="" style="background-color: #0f254b">查询类型</option>
+                <option name="xx" value="areaType" style="background-color: #0f254b">xxx</option>
+                <option name="xx" value="lineType" style="background-color: #0f254b">xx</option>
+                <option name="xx" value="poleType" style="background-color: #0f254b">xx</option>
+              </select>
+            </el-form-item>
+            <el-form-item>
+              <el-button class="newButton" icon="el-icon-search" @click="queryData">查 询</el-button>
+            </el-form-item>
+          </el-form>
+        </div>
+        <!--  展示  -->
+        <div class="main-view-container">
+          <el-row class="table">
+            <!--    -->
+            <el-col :span="24" class="table-div">
+              <el-table ref="multipleTable" :data="tableData" rowKey="stationId" height="100%"  width="100%" size="mini"
+                        highlight-current-row
+                        @row-click="rowClick" :header-cell-class-name="tableHeaderClass" :row-class-name="tableRowClassName"
+                        @selection-change="handleSelectionChange"
+                        :cell-class-name="colClass">
+                <el-table-column prop="name" :label="nameType" header-align="center" v-if="queryType!=='poleType'"></el-table-column>
+                <el-table-column prop="xx" label="xxx" header-align="center" v-if="queryType==='poleType'"></el-table-column>
+                <el-table-column prop="xx" label="xxx" header-align="center" v-if="queryType==='poleType'"></el-table-column>
+                <el-table-column prop="xx" label="xxx" header-align="center" v-if="queryType==='poleType'"></el-table-column>
+                <el-table-column prop="xx" label="xx" header-align="center" v-if="queryType==='poleType'" :formatter="formatterPoleType"></el-table-column>
+              </el-table>
+            </el-col>
+            <!--    -->
+            <el-col :span="24" class="pagebar">
+              <el-pagination :current-page="page" :page-size="size" :total="total" @size-change="handleSizeChange"
+                             @current-change="handlePageChange"
+                             :page-sizes="[10, 20, 50, 100]"
+                             layout="sizes, prev, pager, next, jumper, ->, total"></el-pagination>
+            </el-col>
+          </el-row>
+        </div>
+
+      </div>
+
+    </el-dialog>
+  </div>
+
+</template>
+
+<script>
+  import {PostJSON, Post, Get,authGet} from "@/http/api";
+  export default {
+    name: "UploadFiles",
+    props: {
+      isVisible:{
+        type:Boolean,
+        default: false
+      },
+      queryType:{
+        type: String,
+        default: "null"
+      }
+    },
+    data() {
+      return {
+        page: 1,
+        size: 10,
+        total: 10,
+        keysName: null,
+        dialogWidth: window.screen.width > 2000 ? '30%' : '40%',
+        dialogVisible: false,
+        tableData: [],
+        selectOptionValue: "",
+        multipleSelection: [],
+        loading: false,
+        nameType:'xxx',
+        params: {
+          currentPage: 1,
+          data: {
+            name: null,
+          },
+          pageSize: 10,
+          poleTypeList: [],
+          poleTypeMap: null,
+        },
+      }
+    },
+    created() {
+    },
+    mounted() {
+     this.findDictByType('PoleType');
+     this.queryData();
+    },
+    methods: {
+      handlePageChange(val) { // 页面跳转
+        this.page = val
+        this.queryData();
+      },
+      //类型 状态 格式化
+      findDictByType(typeName) {
+        let params = {
+          name: typeName
+        }
+        this.loading = true
+        authGet('/dict/findDictByType', params).then((res) => {
+          // console.log(res)
+          if (res.code === 0) {
+            this.printContent("类型查询：", res);
+            if (typeName === 'PoleStatus') {
+              this.xxxStatusList = res.data
+              this.xxxStatusMap = new Map() //存储map
+              res.data.forEach(item => {
+                this.xxxStatusMap.set(item.name + '', item.depict)
+              })
+            } else if (typeName === 'PoleType') {
+              this.xxxTypeList = res.data
+              this.xxTypeMap = new Map()  //存储map
+              res.data.forEach(item => {
+                this.xxxTypeMap.set(item.name + '', item.depict)
+              })
+            }
+          } else {
+            this.loading = false
+            this.$message.error("res.msg);
+          }
+        }).catch(e => {
+          this.loading = false
+          this.$message.error("e.message);
+        })
+      },
+      formatterPoleType(row, column) {
+        let result = '' + row.poleType
+        
+        if (row.poleType !== null && row.poleType !== '') {
+          result = this.poleTypeMap.get(row.poleType + '')
+        }
+        return result
+      },
+      handleSizeChange(val) { // 每页显示条数
+        this.size = val
+      },
+      selectQueryOptions(obj) {
+        this.selectOptionValue = obj.target.value;
+        this.queryType=null;
+        this.queryData();
+
+      },
+      printContent(desc, obj) {
+        if (desc!= null) {
+          console.log(desc);
+          console.log(obj);
+        }
+      },
+      queryData(){
+        this.tableData=[];
+        if(null!=this.keysName){
+          this.params.data.name=this.keysName.trim();
+          this.params.data.fpName=this.keysName.trim();
+        }
+        let url='';
+        let queryType=this.queryType;
+
+        let mySelect=this.selectOptionValue;
+        if(null!=mySelect&&mySelect!==""){
+          this.queryType=mySelect;
+          queryType=mySelect;
+        }
+             
+        this.searchData(url);
+      },
+      handleClose() {
+        this.closeMyDialog();
+      },
+      searchData(url){
+        this.params.currentPage = this.page;
+        this.params.pageSize = this.size;
+        this.printContent("请求参数：",this.params)
+        PostJSON(url, this.params).then((res) => {
+          if (res.code === 200) {
+            this.printContent("返回数据：",this.tableData)
+            this.tableData = res.data;
+            this.total = res.count
+            this.loading = false
+          } else {
+            this.loading = false
+            this.$message.error(res.msg);
+          }
+        }).catch(e => {
+          this.loading = false
+          this.$message.error(e.message);
+        })
+      },
+
+      rowClick(row) { // 行单击
+        this.$emit('selectData',row);
+        this.closeMyDialog();
+      },
+      closeMyDialog(){
+        this.$emit('closeQueryDialog',false);
+      },
+      tableHeaderClass() { // 表格头部样式
+        return 'headerClass'
+      },
+      tableRowClassName({row, rowIndex}) { // 列样子
+        if (rowIndex % 2 === 1) {
+          return 'warning-row';
+        } else {
+          return 'success-row';
+        }
+      },
+      colClass({row, rowIndex}) { // 表格
+        return ''
+      },
+      handleSelectionChange(val) {
+        this.multipleSelection = val
+      }
+
+    }
+  }
+</script>
+
+<style scoped lang="scss">
+  .main-view {
+    width: 100%;
+    height: 100%;
+    /*height: calc(100% - 70px);*/
+    /*border: 1px solid red;*/
+
+    .search-box {
+      padding: 5px;
+      width: 100%;
+      /*height: 6%;*/
+      height: 50px;
+      /*border: 1px solid red;*/
+      .search-form {
+        width: 100%;
+        height: 100%;
+        /*border: 1px solid yellow;*/
+      }
+    }
+
+    .main-view-container {
+      width: 100%;
+      /*height: 94%;*/
+      height: 900px;
+      border: 1px solid #0e80b7;
+      border-radius: 10px;
+      padding: 5px;
+
+      .table {
+        height: 800px;
+        width: 100%;
+        /*border: 1px solid yellow;*/
+
+        .table-div {
+          height: calc(100% - 3rem);
+          width: calc(100%);
+          overflow: hidden;
+          border: 2px solid #0e80b7;
+        }
+
+        .pagebar {
+          height: 3rem;
+          /*border: 1px solid red;*/
+        }
+      }
+    }
+  }
+</style>
+
+
