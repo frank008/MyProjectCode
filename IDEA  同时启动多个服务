@@ -1,0 +1,11 @@
+IDEA  同时启动多个服务  
+找到 .idea\workspace.xml
+
+找到 RunDashboard 没有则 ，添加
+  <component name="RunDashboard">
+    <option name="configurationTypes">
+      <set>
+        <option value="SpringBootApplicationConfigurationType" />
+      </set>
+    </option>
+  </component>
