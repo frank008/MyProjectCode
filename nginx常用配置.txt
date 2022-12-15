@@ -1,0 +1,61 @@
+nginx
+======================================
+http{
+    gzip off; #开启或关闭gzip on off　　 
+    gzip_static on;#是否开启gzip静态资源
+    gzip_disable "MSIE [1-6]\."; #不使用gzip IE6
+    gzip_min_length 1k; #gzip压缩最小文件大小，超出进行压缩（自行调节）
+    gzip_buffers 32 4k; #buffer 不用修改
+    gzip_comp_level 5; #压缩级别:1-10，数字越大压缩的越好，时间也越长
+    gzip_types  text/plain application/javascript application/x-javascript text/javascript text/css application/xml;
+    gzip_vary on;  #跟Squid等缓存服务有关，on的话会在Header里增加 "Vary: Accept-Encoding"
+    gzip_http_version 1.0;
+
+    sendfile            on;
+    tcp_nopush          on;
+    tcp_nodelay         on;
+    keepalive_timeout   180;
+    types_hash_max_size 2048;
+   	 
+    server_names_hash_bucket_size 512;
+    client_header_buffer_size 32k;
+    large_client_header_buffers 4 32k;
+    client_max_body_size 50m;
+
+    include              /etc/nginx/mime.types;
+    default_type        application/octet-stream;
+    include /etc/nginx/conf.d/*.conf; #包含其他配置文件
+}
+=================================
+nginx 转发端口
+stream {
+    server {
+        listen 43306;
+        proxy_pass xxxxx:3306;
+        proxy_timeout 30000s;
+   }
+    server {
+        listen 2344
+        proxy_pass xxxxx:2344;
+        proxy_timeout 30000s;
+   }
+}
+====================
+nginx 访问文件
+ # 附件查看
+        location /file {
+            alias   /my/dsfasd/files;
+            autoindex on;
+            autoindex_exact_size off;
+            autoindex_localtime on;
+            charset utf-8,gbk;
+        }
+
+===================
+nginx 访问 文本，html内容
+location  /MP_verify_QJ6alc2zID6ScNi0.txt {
+      charset UTF-8;
+      default_type text/html;
+     return  200 'QJ6alc2zID6ScNi0';
+}
+======================
